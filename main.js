@@ -80,8 +80,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // Create the main graph
-var margin = {top: 10, right: 10, bottom: 100, left: 40},
-    margin2 = {top: 430, right: 10, bottom: 20, left: 40},
+var margin = {top: 10, right: 10, bottom: 100, left: 60},
+    margin2 = {top: 430, right: 10, bottom: 20, left: 60},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom,
     height2 = 500 - margin2.top - margin2.bottom;
@@ -134,12 +134,14 @@ var graphData = [];
 
 var path1, gx1, gy1, path2, gx2, gy2;
 
+function convertData(d) {
+  d.ticker.now = new Date(parseFloat(d.ticker.now) / 10000);
+  d.ticker.avg.value = parseFloat(d.ticker.avg.value);
+};
+
 // Initially load the graph with historical data and assign variables
 function loadData(data) {
-  data.forEach(function(d) {
-    d.ticker.now = parseInt(d.ticker.now);
-    d.ticker.avg.value = parseFloat(d.ticker.avg.value);
-  });
+  data.forEach(convertData);
 
   x.domain(d3.extent(data.map(function(d) { return d.ticker.now; })));
   var maximum = d3.max(data.map(function(d) { return d.ticker.avg.value; })),
@@ -177,12 +179,19 @@ function loadData(data) {
     .selectAll("rect")
       .attr("y", -6)
       .attr("height", height2 + 7);
+
+  // Add label
+  focus.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 6)
+    .attr("dy", ".71em")
+    .style("text-anchor", "end")
+    .text("Price");
 };
 
 // When we get a new value, update the graph with new data
 function updateData(newValue, data) {
-  newValue.ticker.now = parseInt(newValue.ticker.now);
-  newValue.ticker.avg.value = parseFloat(newValue.ticker.avg.value);
+  convertData(newValue);
 
   data.push(newValue);
 
