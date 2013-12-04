@@ -1,0 +1,18 @@
+{
+  "name": "bitcoin",
+  "version": "0.0.0",
+  "description": "ERROR: No README.md file found!",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "author": "",
+  "license": "BSD",
+  "gitHead": "87ce64c87b8d5fc870f490c38840c8183254a5cd",
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-connect": "~0.5.0",
+    "grunt-contrib-watch": "~0.5.3"
+  }
+}
