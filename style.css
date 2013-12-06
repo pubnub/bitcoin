@@ -1,7 +1,10 @@
 /* Page Styles */
+body {
+  background: white !important;
+}
+
 #price {
   font: 16px sans-serif;
-  font-weight: bold;
 }
 
 /* Chart Styling */
