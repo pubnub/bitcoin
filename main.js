@@ -53,12 +53,12 @@ HistoryLoader.prototype.getHistory = function(date, count, callback) {
 
 var updatePrice,
     updateUsers;
-document.addEventListener('DOMContentLoaded', function () {
+$(document).ready(function () {
   // Handle the current price value and update it regularly
   var priceEl = document.querySelector('#price');
 
   updatePrice = function (message) {
-    priceEl.innerHTML = message.ticker.avg.display;
+    price.innerHTML = message.ticker.avg.value;
   };
 
   pubnub.history({
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
     count: 1,
     callback: function (history) {
       if (history[0].length > 0) {
-        priceEl.innerHTML = history[0][0].ticker.avg.display;
+        price.innerHTML = history[0][0].ticker.avg.value;
       }
     }
   });
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var usersEl = document.querySelector('#users');
 
   updateUsers = function (presence) {
-    usersEl.innerHTML = presence.occupancy.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    users.innerHTML = presence.occupancy.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 });
 
@@ -132,7 +132,7 @@ var context = svg.append("g")
 // Create a store for graph's data
 var graphData = [];
 
-var path1, gx1, gy1, path2, gx2, gy2;
+var path1, gx1, gy1, path2, gx2, gy2, tooltip;
 
 function convertData(d) {
   d.ticker.now = new Date(parseFloat(d.ticker.now) / 10000);
@@ -187,6 +187,43 @@ function loadData(data) {
     .attr("dy", ".71em")
     .style("text-anchor", "end")
     .text("Price");
+
+  // Add tooltip
+  tooltip = d3.select('body').append('div')
+    .attr('class', 'tooltip')
+    .style('opacity', 0);
+
+  // Add circles to do mouseover events
+  svg.selectAll("circle")
+    .data(data)
+  .enter().append("circle")
+    .attr("r", 5)
+    .attr("cx", function (d) {
+      var cx = x(d.ticker.now) + margin.left;
+      if (cx < margin.left) {
+        cx = -50;
+      }
+      return cx;
+    })
+    .attr("cy", function (d) { return y(d.ticker.avg.value) + margin.top; })
+    .style("fill", "black")
+    .style("stroke", "none")
+    .style("pointer-events", "all")
+    .on("mouseover", function (d) {
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 0.9);
+      tooltip.html(d.ticker.avg.display)
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY - 28) + "px");
+    })
+    .on("mouseout", function (d) {
+      tooltip.transition()
+        .duration(500)
+        .style("opacity", 0);
+    })
+  .append("title")
+    .text(function (d) { return "Date: " + d.ticker.now; });
 };
 
 // When we get a new value, update the graph with new data
@@ -198,14 +235,12 @@ function updateData(newValue, data) {
   x.domain(d3.extent(data.map(function(d) { return d.ticker.now; })));
   var maximum = d3.max(data.map(function(d) { return d.ticker.avg.value; })),
       minimum = d3.min(data.map(function (d) { return d.ticker.avg.value; }));
-  y.domain([minimum, maximum]);
+  y.domain([minimum - 10, maximum + 10]);
   x2.domain(x.domain());
   y2.domain(y.domain());
 
-  path1.datum(data);
-  //  .attr("d", area);
-
-  //gx1.call(xAxis);
+  path1.datum(data)
+    .attr("d", area);
 
   gy1.call(yAxis);
 
@@ -214,8 +249,41 @@ function updateData(newValue, data) {
 
   gx2.call(xAxis2);
 
-  //gy2.call(brush);
   brushed();
+
+  // Add new circle
+  svg.selectAll("circle")
+    .data(data)
+  .enter().append("circle")
+    .attr("r", 5)
+    .attr("cx", function (d) {
+      var cx = x(d.ticker.now) + margin.left;
+      if (cx < margin.left) {
+        cx = -50;
+      }
+      return cx;
+    })
+    .attr("cy", function (d) { return y(d.ticker.avg.value) + margin.top; })
+    .style("fill", "black")
+    .style("stroke", "none")
+    .style("pointer-events", "all")
+    .on("mouseover", function (d) {
+      tooltip.transition()
+        .duration(200)
+        .style("opacity", 0.9);
+      tooltip.html(d.ticker.avg.display)
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY - 28) + "px");
+    })
+    .on("mouseout", function (d) {
+      tooltip.transition()
+        .duration(500)
+        .style("opacity", 0);
+    })
+  .append("title")
+    .text(function (d) { return "Date: " + d.ticker.now; });
+
+  return data;
 };
 
 // Callback for brushing on the minimap graph
@@ -223,6 +291,13 @@ function brushed() {
   x.domain(brush.empty() ? x2.domain() : brush.extent());
   focus.select("path").attr("d", area);
   focus.select(".x.axis").call(xAxis);
+  svg.selectAll("circle").attr("cx", function (d) { 
+    var cx = x(d.ticker.now) + margin.left;
+    if (cx < margin.left) {
+      cx = -50;
+    }
+    return cx;
+  });
 };
 
 // Load the past 24 hours of history
@@ -238,11 +313,14 @@ historyLoader.loadHistory((Date.now() - oneHour * 24), oneHour, function (data) 
   pubnub.subscribe({
     channel: 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f',
     callback: function (message) {
-      updateData(message, graphData);
+      graphData = updateData(message, graphData);
 
       if (updatePrice != null) {
         updatePrice(message);
       }
+
+      // Flip the coin!
+      flipCoin();
     },
     presence: function (presence) {
       if (updateUsers != null) {
@@ -251,4 +329,16 @@ historyLoader.loadHistory((Date.now() - oneHour * 24), oneHour, function (data) 
     }
   });
 });
+
+var flipping = false;
+function flipCoin() {
+  if (flipping === false) {
+    flipping = true;
+    $('.coin').addClass('flipped');
+    setTimeout(function () {
+      flipping = false;
+      $('.coin').removeClass('flipped');
+    }, 1000);
+  }
+};
 

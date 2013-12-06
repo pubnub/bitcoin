@@ -5,48 +5,31 @@
 
     <title>Bitcoin Dashboard</title>
 
-    <style>
-      .x.axis line {
-        shape-rendering: auto;
-      }
-
-      .line {
-        fill: none;
-        stroke: #000;
-        stroke-width: 1.5px;
-      }
-
-      svg {
-        font: 10px sans-serif;
-      }
-
-      path {
-        fill: rgba(0, 0, 0, 0.1);
-        stroke: orange;
-        stroke-width: 3px;
-      }
-
-      .axis path,
-      .axis line {
-        fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
-      }
-
-      .brush .extent {
-        stroke: #fff;
-        fill-opacity: .125;
-        shape-rendering: crispEdges;
-      }
-    </style>
+    <link type="text/css" rel="stylesheet" href="style.css" />
+    <link type="text/css" rel="stylesheet" href="odometer-theme-default.css" />
   </head>
   <body>
+    
     <h3>BitCoin Dashboard</h3>
 
-    <p>The current average price is: <span id="price">$0.00</span></p>
+    <div id="coin">
+      <div class="flip"> 
+        <div class="coin"> 
+          <div class="face front"> 
+          </div> 
+          <div class="face back"> 
+          </div> 
+        </div> 
+      </div>
+    </div>
+    <p>
+      The current average price is: $<span id="price" class="odometer">0.00</span>
+    </p>
 
-    <p>There are currently <span id="users">0</span> users online</p>
+    <p>There are currently <span id="users" class="odometer">0</span> users online</p>
 
+    <script src="bower_components/jquery/jquery.js"></script>
+    <script src="odometer.min.js"></script>
     <script src="http://cdn.pubnub.com/pubnub.js"></script>
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="main.js"></script>
