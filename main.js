@@ -4,15 +4,22 @@ var pubnub = PUBNUB.init({
   subscribe_key: 'sub-c-50d56e1e-2fd9-11e3-a041-02ee2ddab7fe'
 });
 
+// Set Global Start Date
 var startDate = ((Date.now() - 1000 * 60 * 60 * 24) * 10000);
 
 // HistoryLoader
 // This object loads the history in increments for a given channel
+// ex.
+// var loader = new HistoryLoader(pubnub, 'my_channel');
+// loader.loadHistory(startDate, 1000 * 60 * 60, function (data) {
+//    console.log("I got", dat);
+// });
 function HistoryLoader(pubnub, channel) {
   this.pubnub = pubnub;
   this.channel = channel;
 };
 
+// Loads one piece of data for every <increment> and gives it to <callback>
 HistoryLoader.prototype.loadHistory = function(startDate, increment, callback) {
   var data = [], that = this;
 
@@ -36,6 +43,7 @@ HistoryLoader.prototype.loadHistory = function(startDate, increment, callback) {
   this.getHistory(startDate, 1, getHistory);
 };
 
+// Gets history for the given <date> and <count>
 HistoryLoader.prototype.getHistory = function(date, count, callback) {
   // PubNub wants dates with greater precision
   date *= 10000
@@ -51,38 +59,10 @@ HistoryLoader.prototype.getHistory = function(date, count, callback) {
   });
 };
 
-var updatePrice,
-    updateUsers;
-$(document).ready(function () {
-  // Handle the current price value and update it regularly
-  var priceEl = document.querySelector('#price');
-
-  updatePrice = function (message) {
-    price.innerHTML = message.ticker.avg.value;
-  };
-
-  pubnub.history({
-    channel: 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f',
-    count: 1,
-    callback: function (history) {
-      if (history[0].length > 0) {
-        price.innerHTML = history[0][0].ticker.avg.value;
-      }
-    }
-  });
-
-  // Handle the number of users online and update it regularly
-  var usersEl = document.querySelector('#users');
-
-  updateUsers = function (presence) {
-    users.innerHTML = presence.occupancy.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  };
-});
-
 // Create the main graph
 var margin = {top: 10, right: 10, bottom: 100, left: 60},
     margin2 = {top: 430, right: 10, bottom: 20, left: 60},
-    width = 960 - margin.left - margin.right,
+    width = 640 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom,
     height2 = 500 - margin2.top - margin2.bottom;
 
@@ -113,7 +93,7 @@ var area2 = d3.svg.area()
     .y0(height2)
     .y1(function(d) { return y2(d.ticker.avg.value); });
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#chart").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
 
@@ -134,6 +114,7 @@ var graphData = [];
 
 var path1, gx1, gy1, path2, gx2, gy2, tooltip;
 
+// Parse into a Date object and extract float value
 function convertData(d) {
   d.ticker.now = new Date(parseFloat(d.ticker.now) / 10000);
   d.ticker.avg.value = parseFloat(d.ticker.avg.value);
@@ -143,6 +124,7 @@ function convertData(d) {
 function loadData(data) {
   data.forEach(convertData);
 
+  // Initially setup the domains
   x.domain(d3.extent(data.map(function(d) { return d.ticker.now; })));
   var maximum = d3.max(data.map(function(d) { return d.ticker.avg.value; })),
       minimum = d3.min(data.map(function (d) { return d.ticker.avg.value; }));
@@ -150,10 +132,9 @@ function loadData(data) {
   x2.domain(x.domain());
   y2.domain(y.domain());
 
+  // Set up the graph components
   path1 = focus.append("path")
-      .datum(data)
-      .attr("clip-path", "url(#clip)")
-      .attr("d", area);
+    .attr("clip-path", "url(#clip)");
 
   gx1 = focus.append("g")
       .attr("class", "x axis")
@@ -161,17 +142,13 @@ function loadData(data) {
       .call(xAxis);
 
   gy1 = focus.append("g")
-      .attr("class", "y axis")
-      .call(yAxis);
+      .attr("class", "y axis");
 
-  path2 = context.append("path")
-      .datum(data)
-      .attr("d", area2);
+  path2 = context.append("path");
 
   gx2 = context.append("g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + height2 + ")")
-      .call(xAxis2);
+      .attr("transform", "translate(0," + height2 + ")");
 
   gy2 = context.append("g")
       .attr("class", "x brush")
@@ -192,46 +169,18 @@ function loadData(data) {
   tooltip = d3.select('body').append('div')
     .attr('class', 'tooltip')
     .style('opacity', 0);
-
-  // Add circles to do mouseover events
-  svg.selectAll("circle")
-    .data(data)
-  .enter().append("circle")
-    .attr("r", 5)
-    .attr("cx", function (d) {
-      var cx = x(d.ticker.now) + margin.left;
-      if (cx < margin.left) {
-        cx = -50;
-      }
-      return cx;
-    })
-    .attr("cy", function (d) { return y(d.ticker.avg.value) + margin.top; })
-    .style("fill", "black")
-    .style("stroke", "none")
-    .style("pointer-events", "all")
-    .on("mouseover", function (d) {
-      tooltip.transition()
-        .duration(200)
-        .style("opacity", 0.9);
-      tooltip.html(d.ticker.avg.display)
-        .style("left", (d3.event.pageX) + "px")
-        .style("top", (d3.event.pageY - 28) + "px");
-    })
-    .on("mouseout", function (d) {
-      tooltip.transition()
-        .duration(500)
-        .style("opacity", 0);
-    })
-  .append("title")
-    .text(function (d) { return "Date: " + d.ticker.now; });
 };
 
-// When we get a new value, update the graph with new data
-function updateData(newValue, data) {
+// Called when a new graph value comes in
+function addData(newValue, data) {
+  // Extract the values we need from the data and format them properly
   convertData(newValue);
 
   data.push(newValue);
+};
 
+// When we get a new value, update the graph with new data
+function updateData(data) {
   x.domain(d3.extent(data.map(function(d) { return d.ticker.now; })));
   var maximum = d3.max(data.map(function(d) { return d.ticker.avg.value; })),
       minimum = d3.min(data.map(function (d) { return d.ticker.avg.value; }));
@@ -297,39 +246,10 @@ function brushed() {
       cx = -50;
     }
     return cx;
-  });
+  }).attr("cy", function (d) { return y(d.ticker.avg.value) + margin.top; });
 };
 
-// Load the past 24 hours of history
-var historyLoader = new HistoryLoader(pubnub, 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f'),
-    oneHour = 1000 * 60 * 60;
-historyLoader.loadHistory((Date.now() - oneHour * 24), oneHour, function (data) {
-  console.log("HISTORY DATA", data);
-
-  graphData = data;
-  loadData(graphData);
-
-  // Subscribe for new data updates
-  pubnub.subscribe({
-    channel: 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f',
-    callback: function (message) {
-      graphData = updateData(message, graphData);
-
-      if (updatePrice != null) {
-        updatePrice(message);
-      }
-
-      // Flip the coin!
-      flipCoin();
-    },
-    presence: function (presence) {
-      if (updateUsers != null) {
-        updateUsers(presence);
-      }
-    }
-  });
-});
-
+// Flip the BitCoin!
 var flipping = false;
 function flipCoin() {
   if (flipping === false) {
@@ -341,4 +261,62 @@ function flipCoin() {
     }, 1000);
   }
 };
+
+$(document).ready(function () {
+  // Handle the current price value and update it regularly
+  var priceEl = document.querySelector('#price');
+
+  function updatePrice(message) {
+    price.innerHTML = message.ticker.avg.value;
+  };
+
+  pubnub.history({
+    channel: 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f',
+    count: 1,
+    callback: function (history) {
+      if (history[0].length > 0) {
+        price.innerHTML = history[0][0].ticker.avg.value;
+      }
+    }
+  });
+
+  // Handle the number of users online and update it regularly
+  var usersEl = document.querySelector('#users');
+
+  function updateUsers(presence) {
+    users.innerHTML = presence.occupancy.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  // Load the past 24 hours of history
+  var historyLoader = new HistoryLoader(pubnub, 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f'),
+      oneHour = 1000 * 60 * 60;
+  historyLoader.loadHistory((Date.now() - oneHour * 24), oneHour, function (data) {
+    console.log("Historical Data:", data);
+
+    graphData = data;
+    loadData(graphData);
+    updateData(graphData);
+
+    // Subscribe for new data updates
+    pubnub.subscribe({
+      channel: 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f',
+      callback: function (message) {
+        addData(message, graphData);
+        graphData = updateData(graphData);
+
+        if (updatePrice != null) {
+          updatePrice(message);
+        }
+
+        // Flip the coin!
+        flipCoin();
+      },
+      presence: function (presence) {
+        if (updateUsers != null) {
+          updateUsers(presence);
+        }
+      }
+    });
+  });
+});
 

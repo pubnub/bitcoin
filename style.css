@@ -1,10 +1,15 @@
 /* Page Styles */
 body {
   background: white !important;
+  padding-top: 10px !important;
 }
 
-#price {
-  font: 16px sans-serif;
+.inline {
+  display: inline;
+}
+
+.row-center > div {
+  text-align: center;
 }
 
 /* Chart Styling */
@@ -42,6 +47,10 @@ path {
 }
 
 /* Chart Tooltips */
+#chart circle {
+  cursor: pointer;
+}
+
 .tooltip {
   position: absolute;
   text-align: center;
@@ -51,8 +60,8 @@ path {
   font: 12px sans-serif;
   font-weight: bold;
   line-height: 28px;
-  background: orange;
-  border: 0px;
+  background: white;
+  border: 2px solid orange;
   border-radius: 8px;
   pointer-events: none;
 }
