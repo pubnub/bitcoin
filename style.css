@@ -5,7 +5,9 @@ body {
 }
 
 .inline {
-  display: inline;
+  display: inline-block;
+  vertical-align: middle;
+  position: relative;
 }
 
 .row-center > div {
@@ -79,6 +81,7 @@ path {
   -webkit-transform: rotatey(-180deg);
 }
 .flip .coin {
+  margin-top: 7px;
   width: 100%;
   height: 100%;
   -webkit-transform-style: preserve-3d;
