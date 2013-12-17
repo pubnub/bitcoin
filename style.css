@@ -94,7 +94,7 @@ path {
   color: white;
   cursor: pointer;
 }
-.flip .coin .back {
+.flip .coin .behind {
   background: url(images/Bitcoin.png);
   background-size: contain;
   -webkit-transform: rotatey(-180deg);
