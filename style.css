@@ -76,6 +76,7 @@ path {
   position: relative;
   display: inline-block;
   float: left;
+  margin-left: 32px;
 }
 .flip .coin.flipped {
   -webkit-transform: rotatey(-180deg);
