@@ -304,9 +304,7 @@ $(document).ready(function () {
         addData(message, graphData);
         graphData = updateData(graphData);
 
-        if (updatePrice != null) {
-          updatePrice(message);
-        }
+        updatePrice(message);
 
         // Flip the coin!
         flipCoin();
